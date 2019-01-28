@@ -1,23 +1,15 @@
 ''' This file takes the power spectrum of the Starry night
 Van Gogh image, and plots the azimuthal and 2D spectrum'''
 
-import os;
-import re;
-import numpy as np;
-import pandas as pd;                        # mathematics
+import os;                                  # command line
+import numpy as np;                         # regular mathematics stuff
+import pandas as pd;                        # data handling
 import matplotlib.pyplot as plt;            # visualisation
-import matplotlib.mlab as mlab;             # distribution viz
-import argparse;                            # command line arguments
-import imageio;                             # reading in mp4 data
+import imageio;                             # reading in image data
 import h5py;                                # importing in hdf5 files
 import skimage;                             # import image data
-from skimage import measure, filters;
-import matplotlib.colors as colors;
-from mpl_toolkits.axes_grid1 import make_axes_locatable;
-from matplotlib import rc, ticker;
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes;
-from scipy import fftpack, misc;
-from sklearn import linear_model
+from scipy import fftpack, misc;            # fourier transform
+from sklearn import linear_model            # linear regression for measuring scaling
 from sklearn.metrics import mean_squared_error, r2_score
 
 
@@ -67,6 +59,8 @@ def azimuthalAverage(image, center=None, variance=None):
     Var_val     = np.zeros(len(Exp_val))
     Var_index   = 0;
 
+    # This is the slow way to calculate the variance, but oh well.
+    # FIX
     if variance:
         for bin in np.unique(r_int[1:]):
 
@@ -136,10 +130,12 @@ image_Blue  = np.array(image[:,:,0]);
 image_Green = np.array(image[:,:,1]);
 image_Red   = np.array(image[:,:,2]);
 
+# Take the 2D power spectra of each of the channels
 Blue2DSpectra   = FourierTransform(image_Blue,n,'2D');
 Green2DSpectra  = FourierTransform(image_Green,n,'2D');
 Red2DSpectra    = FourierTransform(image_Red,n,'2D');
 
+# Take the azimuthally averaged power spectrum, and the variance.
 Blue2DSpectra_azi, Blue_var    = FourierTransform(image_Blue,n,'aziAverage',variance=True);
 Green2DSpectra_azi, Green_var  = FourierTransform(image_Green,n,'aziAverage',variance=True);
 Red2DSpectra_azi, Red_var      = FourierTransform(image_Red,n,'aziAverage',variance=True);
@@ -155,6 +151,7 @@ fs = 14;
 rc('font', **{'family': 'serif', 'serif': ['Computer Modern']});
 rc('text', usetex=True);
 
+# Blue channel
 im1 = ax[0].imshow( image_Blue, cmap=plt.cm.plasma )
 ax[0].annotate('Blue Channel',xy=(0.02, 0.9),xycoords='axes fraction',
                xytext=(0.02, 0.9),textcoords='axes fraction',
@@ -162,6 +159,7 @@ ax[0].annotate('Blue Channel',xy=(0.02, 0.9),xycoords='axes fraction',
 ax[0].set_xticks([])
 ax[0].set_yticks([])
 
+# Green channel
 im2 = ax[1].imshow( image_Green, cmap=plt.cm.plasma )
 ax[1].annotate('Green Channel',xy=(0.02, 0.9),xycoords='axes fraction',
                xytext=(0.02, 0.9),textcoords='axes fraction',
@@ -169,6 +167,7 @@ ax[1].annotate('Green Channel',xy=(0.02, 0.9),xycoords='axes fraction',
 ax[1].set_xticks([])
 ax[1].set_yticks([])
 
+# Red channel
 im3 = ax[2].imshow( image_Red, cmap=plt.cm.plasma )
 ax[2].annotate('Red Channel',xy=(0.02, 0.9),xycoords='axes fraction',
                xytext=(0.02, 0.9),textcoords='axes fraction',
@@ -176,8 +175,8 @@ ax[2].annotate('Red Channel',xy=(0.02, 0.9),xycoords='axes fraction',
 ax[2].set_xticks([])
 ax[2].set_yticks([])
 
-plt.savefig('Figure2.png',dpi=400)
-plt.close()
+# plt.savefig('Figure2.png',dpi=400)
+# plt.close()
 
 # Figure 3: Power Spectrum and contours
 ############################################################################################################################################
@@ -188,6 +187,7 @@ fs = 8;
 rc('font', **{'family': 'serif', 'serif': ['Computer Modern']});
 rc('text', usetex=True);
 
+# Green channel power spectra
 im1 = ax[0,0].imshow( np.log10( Green2DSpectra ), cmap=plt.cm.plasma )
 ax[0,0].annotate(r'Green Channel',
                  xy=(0.02, 0.9),xycoords='axes fraction',
@@ -201,6 +201,7 @@ ax[0,0].annotate(r'$\log_{10} \mathcal{P}(k_x,k_y):$ ' + '[{},{}]'.format( round
 ax[0,0].set_xticks([])
 ax[0,0].set_yticks([])
 
+# Blue channel power spectra
 im2 = ax[0,1].imshow( np.log10( Blue2DSpectra ), cmap=plt.cm.plasma )
 ax[0,1].annotate(r'Blue Channel',
                  xy=(0.02, 0.9),xycoords='axes fraction',
@@ -214,6 +215,7 @@ ax[0,1].annotate(r'$\log_{10} \mathcal{P}(k_x,k_y):$ ' + '[{},{}]'.format( round
 ax[0,1].set_xticks([])
 ax[0,1].set_yticks([])
 
+# Red channel power spectra
 im3 = ax[0,2].imshow( np.log10( Red2DSpectra ), cmap=plt.cm.plasma )
 ax[0,2].annotate(r'Red Channel',
                  xy=(0.02, 0.9),xycoords='axes fraction',
@@ -226,6 +228,9 @@ ax[0,2].annotate(r'$\log_{10} \mathcal{P}(k_x,k_y):$ ' + '[{},{}]'.format( round
                  fontsize=fs,color='w');
 ax[0,2].set_xticks([])
 ax[0,2].set_yticks([])
+
+
+# Now create the smoothed power spectrum to find the isobars
 
 # Standard deviation of the Gaussian kernel
 std_dev = 10;
@@ -243,7 +248,7 @@ ax[1,2].set_xticks([])
 ax[1,2].set_yticks([])
 
 # for a bunch of different contours
-for parms in np.linspace(-4,0,10):
+for parms in np.linspace(-4,0,10): #the contour domain, i.e. the power of each isobar
     contours1 = measure.find_contours( filters.gaussian(np.log10( Green2DSpectra ), 10), parms)
     contours2 = measure.find_contours( filters.gaussian(np.log10( Blue2DSpectra ), 10), parms)
     contours3 = measure.find_contours( filters.gaussian(np.log10( Red2DSpectra ), 10), parms)
@@ -257,8 +262,8 @@ for parms in np.linspace(-4,0,10):
     for n, contour in enumerate(contours3):
         ax[1,2].plot(contour[:, 1], contour[:, 0], linewidth=1, color='white')
 
-plt.savefig('Figure3.png',dpi=300)
-plt.close()
+#plt.savefig('Figure3.png',dpi=300)
+#plt.close()
 
 # Figure 4: Azimuthally-averaged power spectrum
 ############################################################################################################################################
@@ -271,7 +276,6 @@ DissScale   = 220;  # dissipation scale wave number
 
 rc('font', **{'family': 'serif', 'serif': ['Computer Modern']});
 rc('text', usetex=True);
-
 
 azi_comb = np.array((Blue2DSpectra_azi,Green2DSpectra_azi,Red2DSpectra_azi))
 
@@ -326,8 +330,8 @@ ax[1].axvline(x=LowerCas,color='red',ls='--')
 ax[1].annotate(r'$\ell_D$',xy=(DrivScale-0.5, 111),fontsize=fs+2,color='red');
 ax[1].annotate(r'$\ell_\nu$',xy=(DissScale-5, 180),fontsize=fs+2,color='red');
 
-plt.savefig('Figure5.png',dpi=200)
-plt.close()
+#plt.savefig('Figure5.png',dpi=200)
+#plt.close()
 
 
 # Slope Calculation
