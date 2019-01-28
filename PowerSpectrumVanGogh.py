@@ -17,11 +17,14 @@ def azimuthalAverage(image, center=None, variance=None):
     """
     Calculate the azimuthally averaged radial profile.
 
-    image - The 2D image
-    center - The [x,y] pixel coordinates used as the center. The default is
-             None, which then uses the center of the image (including
-             fracitonal pixels).
+    Modified from: http://www.astrobetter.com/wiki/python_radial_profiles
 
+    image       - The 2D image
+    center      - The [x,y] pixel coordinates used as the center. The default is
+                None, which then uses the center of the image (including
+                fractional pixels).
+    variance    - true / false if the variance of the averaging should also
+                be calculated.
     """
     # Calculate the indices from the image
     y, x = np.indices(image.shape)
@@ -68,7 +71,7 @@ def azimuthalAverage(image, center=None, variance=None):
                 Var_val[Var_index] = np.var(i_float[r_int==bin])
                 Var_index += 1
             except:
-                print("The variance has finished.")
+                print("The variance calculation has finished.")
 
         return Exp_val, Var_val
 
@@ -76,6 +79,15 @@ def azimuthalAverage(image, center=None, variance=None):
     return Exp_val
 
 def FourierTransform(data,n,type,variance=None):
+    """
+    Calculate the fourier transform.
+
+    data        - The 2D image data
+    n           - the coef. of the fourier transform = grid size.
+    type        - either '2D' or 'aziAverage' for 2D or averaged power spectrum calculations.
+    variance    - passed to the azimuthal averaging if you want to calculate the variance of
+                the average.
+    """
     data    = data.astype(float);                   # make sure the data is float type
     data    = ( 1/(n)**2 ) * fftpack.fft2(data)     # 2D fourier transform
     data    = fftpack.fftshift(data)                # center the transform so k = (0,0) is in the center
@@ -97,7 +109,16 @@ def FourierTransform(data,n,type,variance=None):
 
     return data
 
-def linear_regression(X,Y,Xreal):
+def linear_regression(X,Y,x):
+        """
+        Calculate the slope of some data that needs to be log transformed.
+
+        X        - numpy array of the selected X variable
+        Y        - numpy array of the selected Y variable
+        Xreal    - the X domain that you want to plot it over (just in case you want a Data
+                set and not just parameters for visualisation purpose). Pretty hacky.
+        """
+
     # make sure data is in the correct structure in and log-log.
     Y      = np.transpose([np.log10(Y)]);
     X      = np.transpose([np.log10(X)]);
@@ -105,14 +126,13 @@ def linear_regression(X,Y,Xreal):
     # Perform the linear regression
     regr            = linear_model.LinearRegression();
     regr.fit(X,Y);
-    log_log_predict = regr.predict(X);
 
     # Just make a bunch of values over the entire x domain for the line
     slope           = regr.coef_[0][0];
     intercept       = regr.intercept_[0];
-    domain          = Xreal;
-    abline_values   = [slope * i + intercept for i in domain];
-    return slope, intercept, domain, abline_values, log_log_predict, Y
+    y   = [slope * i + intercept for i in x];
+
+    return slope, intercept, x, y
 
 
 # Start Script
@@ -340,4 +360,4 @@ ax[1].annotate(r'$\ell_\nu$',xy=(DissScale-5, 180),fontsize=fs+2,color='red');
 k_fit       = k[UpperCas:LowerCas]
 Power_fit   = azi_k_aver[UpperCas:LowerCas]
 
-slope, intercept, domain, abline_values, log_log_predict, Y = linear_regression(k_fit,Power_fit,k_fit)
+slope, intercept, x, y = linear_regression(k_fit,Power_fit,k_fit)
