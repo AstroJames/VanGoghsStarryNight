@@ -6,10 +6,11 @@ import argparse                            # command line arguments
 import numpy as np                         # regular mathematics stuff
 import pandas as pd                        # data handling
 import matplotlib.pyplot as plt            # visualisation
+from matplotlib import rc                  # nicer text in matplotlib
 import imageio                             # reading in image data
 import h5py                                # importing in hdf5 files
 import skimage                             # import image data
-from skimage import measure                # for drawing contours
+from skimage import measure, filters       # for drawing contours and Gaussian filters
 from scipy import fftpack, misc            # fourier transform
 from sklearn import linear_model           # linear regression for measuring scaling
 from sklearn.metrics import mean_squared_error, r2_score
@@ -201,7 +202,7 @@ ax[2].set_xticks([])
 ax[2].set_yticks([])
 
 # plt.savefig('Figure2.png',dpi=400)
-# plt.close()
+plt.close()
 
 # Figure 3: Power Spectrum and contours
 ############################################################################################################################################
@@ -288,7 +289,7 @@ for parms in np.linspace(-4,0,10): #the contour domain, i.e. the power of each i
         ax[1,2].plot(contour[:, 1], contour[:, 0], linewidth=1, color='white')
 
 #plt.savefig('Figure3.png',dpi=300)
-#plt.close()
+plt.close()
 
 # Figure 4: Azimuthally-averaged power spectrum
 ############################################################################################################################################
@@ -323,7 +324,7 @@ ax.annotate(r'$\ell_D$',xy=(DrivScale, 15),fontsize=fs+2,color='red')
 ax.annotate(r'$\ell_\nu$',xy=(DissScale, 0.009),fontsize=fs+2,color='red')
 ax.legend(prop={'size': 12})
 
-plt.savefig('Figure4.png',dpi=200)
+#plt.savefig('Figure4.png',dpi=200)
 plt.close()
 
 f, ax = plt.subplots(1,2,figsize=(6,2), dpi=200, facecolor='white')
@@ -356,7 +357,7 @@ ax[1].annotate(r'$\ell_D$',xy=(DrivScale-0.5, 111),fontsize=fs+2,color='red')
 ax[1].annotate(r'$\ell_\nu$',xy=(DissScale-5, 180),fontsize=fs+2,color='red')
 
 #plt.savefig('Figure5.png',dpi=200)
-#plt.close()
+plt.close()
 
 
 # Slope Calculation
