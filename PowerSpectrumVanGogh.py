@@ -1,16 +1,25 @@
 ''' This file takes the power spectrum of the Starry night
 Van Gogh image, and plots the azimuthal and 2D spectrum'''
 
-import os;                                  # command line
-import numpy as np;                         # regular mathematics stuff
-import pandas as pd;                        # data handling
-import matplotlib.pyplot as plt;            # visualisation
-import imageio;                             # reading in image data
-import h5py;                                # importing in hdf5 files
-import skimage;                             # import image data
-from scipy import fftpack, misc;            # fourier transform
-from sklearn import linear_model            # linear regression for measuring scaling
+import os                                  # command line
+import argparse                            # command line arguments
+import numpy as np                         # regular mathematics stuff
+import pandas as pd                        # data handling
+import matplotlib.pyplot as plt            # visualisation
+import imageio                             # reading in image data
+import h5py                                # importing in hdf5 files
+import skimage                             # import image data
+from skimage import measure                # for drawing contours
+from scipy import fftpack, misc            # fourier transform
+from sklearn import linear_model           # linear regression for measuring scaling
 from sklearn.metrics import mean_squared_error, r2_score
+
+# Command line arguments
+############################################################################################################################################
+ap 			= argparse.ArgumentParser(description = 'Just a bunch of input arguments')
+ap.add_argument('-file','--file',required=True,help='the file name for the input file',type=str)
+args 		= vars(ap.parse_args())
+############################################################################################################################################
 
 
 def azimuthalAverage(image, center=None, variance=None):
@@ -60,7 +69,7 @@ def azimuthalAverage(image, center=None, variance=None):
 
     # Calculate the variance
     Var_val     = np.zeros(len(Exp_val))
-    Var_index   = 0;
+    Var_index   = 0
 
     # This is the slow way to calculate the variance, but oh well.
     # FIX
@@ -88,7 +97,7 @@ def FourierTransform(data,n,type,variance=None):
     variance    - passed to the azimuthal averaging if you want to calculate the variance of
                 the average.
     """
-    data    = data.astype(float);                   # make sure the data is float type
+    data    = data.astype(float)                    # make sure the data is float type
     data    = ( 1/(n)**2 ) * fftpack.fft2(data)     # 2D fourier transform
     data    = fftpack.fftshift(data)                # center the transform so k = (0,0) is in the center
     data    = np.abs(data*np.conjugate(data))       # take the power spectrum
@@ -110,66 +119,62 @@ def FourierTransform(data,n,type,variance=None):
     return data
 
 def linear_regression(X,Y,x):
-        """
-        Calculate the slope of some data that needs to be log transformed.
+    """
+    Calculate the slope of some data that needs to be log transformed.
 
-        X        - numpy array of the selected X variable
-        Y        - numpy array of the selected Y variable
-        Xreal    - the X domain that you want to plot it over (just in case you want a Data
-                set and not just parameters for visualisation purpose). Pretty hacky.
-        """
+    X        - numpy array of the selected X variable
+    Y        - numpy array of the selected Y variable
+    Xreal    - the X domain that you want to plot it over (just in case you want a Data
+            set and not just parameters for visualisation purpose). Pretty hacky.
+    """
 
     # make sure data is in the correct structure in and log-log.
-    Y      = np.transpose([np.log10(Y)]);
-    X      = np.transpose([np.log10(X)]);
+    Y      = np.transpose([np.log10(Y)])
+    X      = np.transpose([np.log10(X)])
 
     # Perform the linear regression
-    regr            = linear_model.LinearRegression();
-    regr.fit(X,Y);
+    regr            = linear_model.LinearRegression()
+    regr.fit(X,Y)
 
     # Just make a bunch of values over the entire x domain for the line
-    slope           = regr.coef_[0][0];
-    intercept       = regr.intercept_[0];
-    y   = [slope * i + intercept for i in x];
+    slope           = regr.coef_[0][0]
+    intercept       = regr.intercept_[0]
+    y   = [slope * i + intercept for i in x]
 
     return slope, intercept, x, y
 
 
 # Start Script
 ############################################################################################################################################
-ap 			= argparse.ArgumentParser(description = 'Just a bunch of input arguments');
-ap.add_argument('-file','--file',required=True,help='the file name for the input file',type=str);
-args 		= vars(ap.parse_args());
-############################################################################################################################################
 
-image = imageio.imread(args['file']);
-n = float(image.shape[0]);
+image = imageio.imread(args['file'])
+n = float(image.shape[0])
 
 # Choose just the blue and green channels to calculate the power spectra.
-image_Blue  = np.array(image[:,:,0]);
-image_Green = np.array(image[:,:,1]);
-image_Red   = np.array(image[:,:,2]);
+image_Blue  = np.array(image[:,:,0])
+image_Green = np.array(image[:,:,1])
+image_Red   = np.array(image[:,:,2])
 
 # Take the 2D power spectra of each of the channels
-Blue2DSpectra   = FourierTransform(image_Blue,n,'2D');
-Green2DSpectra  = FourierTransform(image_Green,n,'2D');
-Red2DSpectra    = FourierTransform(image_Red,n,'2D');
+Blue2DSpectra   = FourierTransform(image_Blue,n,'2D')
+Green2DSpectra  = FourierTransform(image_Green,n,'2D')
+Red2DSpectra    = FourierTransform(image_Red,n,'2D')
 
 # Take the azimuthally averaged power spectrum, and the variance.
-Blue2DSpectra_azi, Blue_var    = FourierTransform(image_Blue,n,'aziAverage',variance=True);
-Green2DSpectra_azi, Green_var  = FourierTransform(image_Green,n,'aziAverage',variance=True);
-Red2DSpectra_azi, Red_var      = FourierTransform(image_Red,n,'aziAverage',variance=True);
+Blue2DSpectra_azi, Blue_var    = FourierTransform(image_Blue,n,'aziAverage',variance=True)
+Green2DSpectra_azi, Green_var  = FourierTransform(image_Green,n,'aziAverage',variance=True)
+Red2DSpectra_azi, Red_var      = FourierTransform(image_Red,n,'aziAverage',variance=True)
 
-k = np.array(range(0,len(Blue2DSpectra_azi)));
+k = np.array(range(0,len(Blue2DSpectra_azi)))
 
 # Figure 2: Starry Night Data
 ############################################################################################################################################
 f, ax = plt.subplots(1, 3, figsize=(6,4), dpi=200, facecolor='white')
 f.subplots_adjust(wspace=0.01,hspace=0.01)
-fs = 14;
+fs = 14
 
-rc('font', **{'family': 'serif', 'serif': ['Computer Modern']});
-rc('text', usetex=True);
+rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
+rc('text', usetex=True)
 
 # Blue channel
 im1 = ax[0].imshow( image_Blue, cmap=plt.cm.plasma )
@@ -202,22 +207,22 @@ ax[2].set_yticks([])
 ############################################################################################################################################
 f, ax = plt.subplots(2, 3, figsize=(6,3), dpi=300, facecolor='white')
 f.subplots_adjust(wspace=0.01,hspace=0.01)
-fs = 8;
+fs = 8
 
-rc('font', **{'family': 'serif', 'serif': ['Computer Modern']});
-rc('text', usetex=True);
+rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
+rc('text', usetex=True)
 
 # Green channel power spectra
 im1 = ax[0,0].imshow( np.log10( Green2DSpectra ), cmap=plt.cm.plasma )
 ax[0,0].annotate(r'Green Channel',
                  xy=(0.02, 0.9),xycoords='axes fraction',
                  xytext=(0.02, 0.9),textcoords='axes fraction',
-                 fontsize=fs+3,color='w');
+                 fontsize=fs+3,color='w')
 ax[0,0].annotate(r'$\log_{10} \mathcal{P}(k_x,k_y):$ ' + '[{},{}]'.format( round( np.log10( Green2DSpectra.min() ),1 ),
                                                                           round( np.log10( Green2DSpectra.max() ),1 ) ),
                  xy=(0.02, 0.05),xycoords='axes fraction',
                  xytext=(0.02, 0.05),textcoords='axes fraction',
-                 fontsize=fs,color='w');
+                 fontsize=fs,color='w')
 ax[0,0].set_xticks([])
 ax[0,0].set_yticks([])
 
@@ -226,12 +231,12 @@ im2 = ax[0,1].imshow( np.log10( Blue2DSpectra ), cmap=plt.cm.plasma )
 ax[0,1].annotate(r'Blue Channel',
                  xy=(0.02, 0.9),xycoords='axes fraction',
                  xytext=(0.02, 0.9),textcoords='axes fraction',
-                 fontsize=fs+3,color='w');
+                 fontsize=fs+3,color='w')
 ax[0,1].annotate(r'$\log_{10} \mathcal{P}(k_x,k_y):$ ' + '[{},{}]'.format( round( np.log10( Blue2DSpectra.min() ),1 ),
                                                                           round( np.log10( Blue2DSpectra.max() ),1) ),
                  xy=(0.02, 0.05),xycoords='axes fraction',
                  xytext=(0.02, 0.05),textcoords='axes fraction',
-                 fontsize=fs,color='w');
+                 fontsize=fs,color='w')
 ax[0,1].set_xticks([])
 ax[0,1].set_yticks([])
 
@@ -240,12 +245,12 @@ im3 = ax[0,2].imshow( np.log10( Red2DSpectra ), cmap=plt.cm.plasma )
 ax[0,2].annotate(r'Red Channel',
                  xy=(0.02, 0.9),xycoords='axes fraction',
                  xytext=(0.02, 0.9),textcoords='axes fraction',
-                 fontsize=fs+3,color='w');
+                 fontsize=fs+3,color='w')
 ax[0,2].annotate(r'$\log_{10} \mathcal{P}(k_x,k_y):$ ' + '[{},{}]'.format( round( np.log10( Red2DSpectra.min() ),1 ),
                                                                           round( np.log10( Red2DSpectra.max() ),1) ),
                  xy=(0.02, 0.05),xycoords='axes fraction',
                  xytext=(0.02, 0.05),textcoords='axes fraction',
-                 fontsize=fs,color='w');
+                 fontsize=fs,color='w')
 ax[0,2].set_xticks([])
 ax[0,2].set_yticks([])
 
@@ -253,7 +258,7 @@ ax[0,2].set_yticks([])
 # Now create the smoothed power spectrum to find the isobars
 
 # Standard deviation of the Gaussian kernel
-std_dev = 10;
+std_dev = 10
 
 im4 = ax[1,0].imshow( filters.gaussian(np.log10( Green2DSpectra ), std_dev), cmap=plt.cm.plasma )
 ax[1,0].set_xticks([])
@@ -288,14 +293,14 @@ for parms in np.linspace(-4,0,10): #the contour domain, i.e. the power of each i
 # Figure 4: Azimuthally-averaged power spectrum
 ############################################################################################################################################
 f, ax = plt.subplots(figsize=(5,5), dpi=200, facecolor='white')
-fs          = 16;   # font size
-UpperCas    = 34;   # upper cascade wave number
-LowerCas    = 80;   # lower cascade wave number
-DrivScale   = 3;    # driving scale wave number
-DissScale   = 220;  # dissipation scale wave number
+fs          = 16    # font size
+UpperCas    = 34    # upper cascade wave number
+LowerCas    = 80    # lower cascade wave number
+DrivScale   = 3     # driving scale wave number
+DissScale   = 220   # dissipation scale wave number
 
-rc('font', **{'family': 'serif', 'serif': ['Computer Modern']});
-rc('text', usetex=True);
+rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
+rc('text', usetex=True)
 
 azi_comb = np.array((Blue2DSpectra_azi,Green2DSpectra_azi,Red2DSpectra_azi))
 
@@ -314,8 +319,8 @@ ax.set_xlabel(r'$|\mathbf{k}|$',size=fs,labelpad=-0.5)
 ax.set_ylabel(r'$\left\langle\mathcal{P}(|\mathbf{k}|) 2 \pi |\mathbf{k}| \right\rangle_{\theta}$',size=fs)
 ax.axvline(x=UpperCas,color='red',ls='--')
 ax.axvline(x=LowerCas,color='red',ls='--')
-ax.annotate(r'$\ell_D$',xy=(DrivScale, 15),fontsize=fs+2,color='red');
-ax.annotate(r'$\ell_\nu$',xy=(DissScale, 0.009),fontsize=fs+2,color='red');
+ax.annotate(r'$\ell_D$',xy=(DrivScale, 15),fontsize=fs+2,color='red')
+ax.annotate(r'$\ell_\nu$',xy=(DissScale, 0.009),fontsize=fs+2,color='red')
 ax.legend(prop={'size': 12})
 
 plt.savefig('Figure4.png',dpi=200)
@@ -323,8 +328,8 @@ plt.close()
 
 f, ax = plt.subplots(1,2,figsize=(6,2), dpi=200, facecolor='white')
 
-rc('font', **{'family': 'serif', 'serif': ['Computer Modern']});
-rc('text', usetex=True);
+rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
+rc('text', usetex=True)
 
 ax[0].set_xscale("log", nonposx='clip')
 ax[0].set_yscale("log", nonposy='clip')
@@ -335,8 +340,8 @@ ax[0].set_xlabel(r'$|\mathbf{k}|$',size=fs,labelpad=-0.5)
 ax[0].set_ylabel(r'$\left\langle\mathcal{P}(|\mathbf{k}|) 2 \pi |\mathbf{k}| \right\rangle_{\theta}/|\mathbf{k}|^{-5/3}$',size=fs)
 ax[0].axvline(x=UpperCas,color='red',ls='--')
 ax[0].axvline(x=LowerCas,color='red',ls='--')
-ax[0].annotate(r'$\ell_D$',xy=(DrivScale-0.5, 33),fontsize=fs+2,color='red');
-ax[0].annotate(r'$\ell_\nu$',xy=(DissScale, 56.5),fontsize=fs+2,color='red');
+ax[0].annotate(r'$\ell_D$',xy=(DrivScale-0.5, 33),fontsize=fs+2,color='red')
+ax[0].annotate(r'$\ell_\nu$',xy=(DissScale, 56.5),fontsize=fs+2,color='red')
 
 ax[1].set_xscale("log", nonposx='clip')
 ax[1].set_yscale("log", nonposy='clip')
@@ -347,8 +352,8 @@ ax[1].set_xlabel(r'$|\mathbf{k}|$',size=fs,labelpad=-0.5)
 ax[1].set_ylabel(r'$\left\langle\mathcal{P}(|\mathbf{k}|) 2 \pi |\mathbf{k}| \right\rangle_{\theta}/|\mathbf{k}|^{-2}$',size=fs)
 ax[1].axvline(x=UpperCas,color='red',ls='--')
 ax[1].axvline(x=LowerCas,color='red',ls='--')
-ax[1].annotate(r'$\ell_D$',xy=(DrivScale-0.5, 111),fontsize=fs+2,color='red');
-ax[1].annotate(r'$\ell_\nu$',xy=(DissScale-5, 180),fontsize=fs+2,color='red');
+ax[1].annotate(r'$\ell_D$',xy=(DrivScale-0.5, 111),fontsize=fs+2,color='red')
+ax[1].annotate(r'$\ell_\nu$',xy=(DissScale-5, 180),fontsize=fs+2,color='red')
 
 #plt.savefig('Figure5.png',dpi=200)
 #plt.close()
