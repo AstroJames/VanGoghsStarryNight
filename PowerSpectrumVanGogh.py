@@ -305,9 +305,9 @@ rc('text', usetex=True)
 
 azi_comb = np.array((Blue2DSpectra_azi,Green2DSpectra_azi,Red2DSpectra_azi))
 
-azi_k_aver          = np.mean(azi_comb, axis=0)  # average along the 0 axis
-azi_k_channel_var   = np.var(azi_comb, axis=0)   # the channel variane
-azi_k_aver_var      = np.sqrt(np.hypot(Blue_var,Green_var,Red_var)) # the azimuthal averaging variance
+azi_k_aver              = np.mean(azi_comb, axis=0)  # average along the 0 axis
+azi_k_channel_var       = np.var(azi_comb, axis=0)   # the channel variane
+azi_k_aver_var          = np.hypot(Blue_var,Green_var,Red_var) # the azimuthal averaging variance
 azi_k_aver_var_upper    = 10 ** ( np.log10(azi_k_aver)+(1/np.log(10)*np.divide(azi_k_aver_var,azi_k_aver) ) )
 azi_k_aver_var_lower    = 10 ** ( np.log10(azi_k_aver)-(1/np.log(10)*np.divide(azi_k_aver_var,azi_k_aver) ) )
 
@@ -366,4 +366,8 @@ plt.close()
 k_fit       = k[UpperCas:LowerCas]
 Power_fit   = azi_k_aver[UpperCas:LowerCas]
 
+# Slope in the pseudo energy cascade
 slope, intercept, x, y = linear_regression(k_fit,Power_fit,k_fit)
+
+# Uncertainty in the slope
+abs(slope) * ( np.mean( azi_k_aver_var[UpperCas:LowerCas] ) / np.mean(Power_fit) )
