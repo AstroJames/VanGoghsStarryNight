@@ -123,6 +123,7 @@ def linear_regression(X,Y,x):
     """
     Calculate the slope of some data that needs to be log transformed.
 
+
     X        - numpy array of the selected X variable
     Y        - numpy array of the selected Y variable
     Xreal    - the X domain that you want to plot it over (just in case you want a Data
