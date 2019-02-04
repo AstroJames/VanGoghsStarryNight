@@ -10,4 +10,6 @@ Vincent van Gogh's painting, The Starry Night, is an iconic piece of art and cul
 
 run PowerSpectrumVanGogh -file "StarryNightSky.png"
 
-where -file is the argument for feeding in the file.
+where -file is the argument for feeding in the Starry Night data.
+
+![Example Starry Night data.](VanGoghsStarryNight/StarryNightSky.png)
