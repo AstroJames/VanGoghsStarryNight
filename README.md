@@ -12,6 +12,8 @@ run PowerSpectrumVanGogh -file "StarryNightSky.png"
 
 where -file is the argument for feeding in the Starry Night data.
 
+## Example data from Starry Night:
+
 The .png file that I pass to my PowerSpectrumVanGogh code is:
 
 ![Example Starry Night data.](https://github.com/AstroJames/VanGoghsStarryNight/blob/Master/StarryNightSky.png)
