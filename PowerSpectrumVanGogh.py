@@ -295,7 +295,7 @@ plt.close()
 # Figure 4: Azimuthally-averaged power spectrum
 ############################################################################################################################################
 f, ax = plt.subplots(figsize=(5,5), dpi=200, facecolor='white')
-fs          = 16    # font size
+fs          = 18    # font size
 UpperCas    = 34    # upper cascade wave number
 LowerCas    = 80    # lower cascade wave number
 DrivScale   = 3     # driving scale wave number
@@ -307,8 +307,8 @@ rc('text', usetex=True)
 azi_comb = np.array((Blue2DSpectra_azi,Green2DSpectra_azi,Red2DSpectra_azi))
 
 azi_k_aver              = np.mean(azi_comb, axis=0)  # average along the 0 axis
-azi_k_channel_var       = np.var(azi_comb, axis=0)   # the channel variane
-azi_k_aver_var          = np.hypot(Blue_var,Green_var,Red_var) # the azimuthal averaging variance
+azi_k_channel_var       = np.var(azi_comb, axis=0)   # the channel variance
+azi_k_aver_var          = np.sqrt(np.hypot(Blue_var,Green_var,Red_var)) # the azimuthal averaging variance
 azi_k_aver_var_upper    = 10 ** ( np.log10(azi_k_aver)+(1/np.log(10)*np.divide(azi_k_aver_var,azi_k_aver) ) )
 azi_k_aver_var_lower    = 10 ** ( np.log10(azi_k_aver)-(1/np.log(10)*np.divide(azi_k_aver_var,azi_k_aver) ) )
 
@@ -317,14 +317,15 @@ ax.set_yscale("log", nonposy='clip')
 ax.plot(k, azi_k_aver_var_upper,color='blue',linewidth=0.75,ls=':',label=r'$1\sigma$ variation')
 ax.plot(k, azi_k_aver_var_lower,color='blue',linewidth=0.75,ls=':')
 im1 = ax.plot(k, azi_k_aver,color='black',label='Averaged power spectrum')
-ax.set_xlabel(r'$|\mathbf{k}|$',size=fs,labelpad=-0.5)
-ax.set_ylabel(r'$\left\langle\mathcal{P}(|\mathbf{k}|) 2 \pi |\mathbf{k}| \right\rangle_{\theta}$',size=fs)
+ax.set_xlabel(r'$k$',size=fs,labelpad=-0.5)
+ax.set_ylabel(r'$\left\langle\mathcal{P}(k) \right\rangle_{\theta}$',size=fs)
 ax.axvline(x=UpperCas,color='red',ls='--')
 ax.axvline(x=LowerCas,color='red',ls='--')
-ax.annotate(r'$\ell_D$',xy=(DrivScale, 15),fontsize=fs+2,color='red')
-ax.annotate(r'$\ell_\nu$',xy=(DissScale, 0.009),fontsize=fs+2,color='red')
+ax.annotate(r'$k_D$',xy=(DrivScale, 15),fontsize=fs+2,color='red')
+ax.annotate(r'$k_\nu$',xy=(DissScale, 0.012),fontsize=fs+2,color='red')
 ax.legend(prop={'size': 12})
 
+plt.show()
 #plt.savefig('Figure4.png',dpi=200)
 plt.close()
 
@@ -338,25 +339,26 @@ ax[0].set_yscale("log", nonposy='clip')
 ax[0].plot(k, azi_k_aver_var_upper*k**(5.0/3),color='blue',linewidth=0.75,ls=':')
 ax[0].plot(k, azi_k_aver_var_lower*k**(5.0/3),color='blue',linewidth=0.75,ls=':')
 im2 = ax[0].plot(k, azi_k_aver*k**(5.0/3),color='black')
-ax[0].set_xlabel(r'$|\mathbf{k}|$',size=fs,labelpad=-0.5)
-ax[0].set_ylabel(r'$\left\langle\mathcal{P}(|\mathbf{k}|) 2 \pi |\mathbf{k}| \right\rangle_{\theta}/|\mathbf{k}|^{-5/3}$',size=fs)
+ax[0].set_xlabel(r'$k$',size=fs,labelpad=-0.5)
+ax[0].set_ylabel(r'$\left\langle\mathcal{P}(k) \right\rangle_{\theta}/k^{-5/3}$',size=fs)
 ax[0].axvline(x=UpperCas,color='red',ls='--')
 ax[0].axvline(x=LowerCas,color='red',ls='--')
-ax[0].annotate(r'$\ell_D$',xy=(DrivScale-0.5, 33),fontsize=fs+2,color='red')
-ax[0].annotate(r'$\ell_\nu$',xy=(DissScale, 56.5),fontsize=fs+2,color='red')
+ax[0].annotate(r'$k_D$',xy=(DrivScale-0.5, 80),fontsize=fs+2,color='red')
+ax[0].annotate(r'$k_\nu$',xy=(DissScale, 56.5),fontsize=fs+2,color='red')
 
 ax[1].set_xscale("log", nonposx='clip')
 ax[1].set_yscale("log", nonposy='clip')
 ax[1].plot(k, azi_k_aver_var_upper*k**2,color='blue',linewidth=0.75,ls=':')
 ax[1].plot(k, azi_k_aver_var_lower*k**2,color='blue',linewidth=0.75,ls=':')
 im2 = ax[1].plot(k, azi_k_aver*k**2,color='black')
-ax[1].set_xlabel(r'$|\mathbf{k}|$',size=fs,labelpad=-0.5)
-ax[1].set_ylabel(r'$\left\langle\mathcal{P}(|\mathbf{k}|) 2 \pi |\mathbf{k}| \right\rangle_{\theta}/|\mathbf{k}|^{-2}$',size=fs)
+ax[1].set_xlabel(r'$k$',size=fs,labelpad=-0.5)
+ax[1].set_ylabel(r'$\left\langle\mathcal{P}(k) \right\rangle_{\theta}/k^{-2}$',size=fs)
 ax[1].axvline(x=UpperCas,color='red',ls='--')
 ax[1].axvline(x=LowerCas,color='red',ls='--')
-ax[1].annotate(r'$\ell_D$',xy=(DrivScale-0.5, 111),fontsize=fs+2,color='red')
-ax[1].annotate(r'$\ell_\nu$',xy=(DissScale-5, 180),fontsize=fs+2,color='red')
+ax[1].annotate(r'$k_D$',xy=(DrivScale-0.5, 111),fontsize=fs+2,color='red')
+ax[1].annotate(r'$k_\nu$',xy=(DissScale-5, 300),fontsize=fs+2,color='red')
 
+plt.show()
 #plt.savefig('Figure5.png',dpi=200)
 plt.close()
 
